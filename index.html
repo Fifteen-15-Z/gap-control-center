@@ -5,6 +5,10 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Gap总控台 · 玩乐·休息·看机会</title>
+<meta name="description" content="Gap总控台：一个用 AI 搭的、ADHD 友好的 Gap 期生活系统。治在家躺平摆烂、作息全乱——吃饭/作息/养猫/清洁/收拾全记录，能摆烂能攒能量币。">
+<meta property="og:title" content="Gap总控台 · ADHD 友好的 Gap 期生活系统">
+<meta property="og:description" content="用 AI 从 0 到 1 做的个人生活台：专治在家躺平摆烂、作息颠倒。吃饭/作息/养猫/清洁/收拾全记录，低压力、可摆烂、有正反馈。">
+<meta property="og:type" content="website">
 <meta name="apple-mobile-web-app-title" content="Gap总控台">
 <meta name="theme-color" content="#5A9E8F">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='15' fill='%235A9E8F'/%3E%3Ctext x='32' y='45' font-size='40' text-anchor='middle' fill='%23fff' font-family='-apple-system,sans-serif' font-weight='700'%3E控%3C/text%3E%3C/svg%3E">
@@ -448,6 +452,17 @@
 </div>
 
 <script>
+/* ============================================================
+ * Gap总控台 · 单文件应用代码地图 (Code Map)
+ * 全内联 · 零外部依赖 · 离线可用。分层如下：
+ *   [工具层]  tStr/shiftDay/pretty/esc/lastN/uid  —— 日期/格式化/防注入
+ *   [资源层]  ICON(内联SVG图标) · THEMES/CATS/GROUPS 等配置表
+ *   [数据层]  S(全局状态) · defaultSettings/migrateSettings/load/save/seed —— 含版本迁移，老数据不丢
+ *   [图表层]  ring/lineChart/weightChart/barChart/pie/monthBars (手写SVG)
+ *   [视图层]  build*(各 Tab 渲染) · render/renderDaily (编排)
+ *   [交互层]  fin/scrollTo 及事件绑定
+ * 设计取舍见 README「工程决策与取舍」。改逻辑请通读全文，无模块拆分。
+ * ============================================================ */
 (function(){
   "use strict";
   var K="wb_gap_anchor_";
@@ -472,15 +487,19 @@
   var OPP_STAGES=["灵感","研究中","已投递","已反馈","面试","Offer"];
   var PIE_COLORS=["#5A9E8F","#4F8FC0","#C9A24B","#C57B8E","#8A6FB0","#3FA8A0","#D98C5F","#7A8A83","#B0C4B8"];
   function svg(n){return '<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">'+ICON[n]+'</svg>';}
-  function defaultSettings(){return{anchors:[{k:"wake",lab:"起床",ic:"sunrise",type:"time",group:"作息"},{k:"sleep",lab:"睡觉",ic:"moon",type:"time",group:"作息"},{k:"sun",lab:"晒太阳 15min",ic:"sun",type:"check",group:"作息"},{k:"water",lab:"喝够水",ic:"drop",type:"check",group:"作息"},{k:"move",lab:"动一动",ic:"move",type:"check",group:"作息"},{k:"mind",lab:"静一静/正念",ic:"brain",type:"check",group:"作息"},{k:"brunch",lab:"吃早午饭",ic:"meal",type:"check",group:"吃饭"},{k:"supper",lab:"吃夜宵",ic:"meal",type:"check",group:"吃饭"},{k:"catF1",lab:"猫·喂食(早)",ic:"cat",type:"check",group:"照顾猫"},{k:"catF2",lab:"猫·喂食(晚)",ic:"cat",type:"check",group:"照顾猫"},{k:"catPoop",lab:"猫·铲屎",ic:"cat",type:"check",group:"照顾猫"},{k:"catPlay",lab:"猫·陪玩",ic:"cat",type:"check",group:"照顾猫"},{k:"catWater",lab:"猫·换水",ic:"cat",type:"check",group:"照顾猫"},{k:"brush",lab:"刷牙",ic:"tooth",type:"check",group:"个人清洁"},{k:"washface",lab:"洗脸",ic:"face",type:"check",group:"个人清洁"},{k:"washhair",lab:"洗头",ic:"hair",type:"check",group:"个人清洁"},{k:"shower",lab:"洗澡",ic:"shower",type:"check",group:"个人清洁"},{k:"washfeet",lab:"洗脚",ic:"foot",type:"check",group:"个人清洁"},{k:"tidy1",lab:"整理一个台面（餐桌/茶几/书桌）",ic:"tidy",type:"check",group:"房间整理"},{k:"tidy2",lab:"洗一批碗或锅",ic:"wash",type:"check",group:"房间整理"},{k:"tidy3",lab:"洗一桶脏衣服",ic:"laundry",type:"check",group:"房间整理"},{k:"tidy4",lab:"扫地/拖地一个房间",ic:"sweep",type:"check",group:"房间整理"}],phases:["玩乐","休息","看机会"],moodLabels:["很差","较差","一般","不错","很好"],energyLabels:["很累","有点累","还行","挺好","充沛"],theme:"green",budget:0,targetWeight:0};}
+  function defaultSettings(){return{anchors:[{k:"wake",lab:"起床",ic:"sunrise",type:"time",group:"作息"},{k:"sleep",lab:"睡觉",ic:"moon",type:"time",group:"作息"},{k:"sun",lab:"晒太阳 15min",ic:"sun",type:"check",group:"作息"},{k:"water",lab:"喝够水",ic:"drop",type:"check",group:"作息"},{k:"move",lab:"动一动",ic:"move",type:"check",group:"作息"},{k:"mind",lab:"静一静/正念",ic:"brain",type:"check",group:"作息"}].concat(NEW_ANCHORS),phases:["玩乐","休息","看机会"],moodLabels:["很差","较差","一般","不错","很好"],energyLabels:["很累","有点累","还行","挺好","充沛"],theme:"green",budget:0,targetWeight:0};}
 
   var S={meta:null,anchors:{},mood:[],tiny:[],weight:[],exercise:[],ledger:[],opp:[],learn:[],milestones:[],events:[],play:[],spirit:[],coins:0,rewards:[],settings:null};
   var curTab="daily",curMood=0,curEnergy=0,curLedType="out",clockTimer=null;
   function defaultRewards(){return[{id:uid("rw"),text:"点顿好的外卖",cost:30,done:false,date:""},{id:uid("rw"),text:"看一场电影/演出",cost:20,done:false,date:""},{id:uid("rw"),text:"买个一直想要的小东西",cost:50,done:false,date:""},{id:uid("rw"),text:"睡到自然醒（不设闹钟）",cost:15,done:false,date:""},{id:uid("rw"),text:"出门浪一天",cost:40,done:false,date:""}];}
   function countLegacyCoins(){var c=0,A=S.settings.anchors;Object.keys(S.anchors).forEach(function(d){var rec=S.anchors[d];if(rec._rest)return;A.forEach(function(a){if(a.type==="time"){if(rec[a.k+"T"])c++;}else if(rec[a.k])c++;});});return c;}
   function migrateSettings(){var changed=false;S.settings.anchors.forEach(function(a){if(!a.group){a.group="作息";changed=true;}});S.settings.anchors=S.settings.anchors.filter(function(a){return a.k!=="catBrush";});NEW_ANCHORS.forEach(function(na){var ex=S.settings.anchors.find(function(a){return a.k===na.k;});if(ex){if(ex.lab!==na.lab||ex.ic!==na.ic||ex.group!==na.group||ex.type!==na.type){ex.lab=na.lab;ex.ic=na.ic;ex.group=na.group;ex.type=na.type;changed=true;}}else{S.settings.anchors.push(JSON.parse(JSON.stringify(na)));changed=true;}});if(changed)save();}
+  var ARR_KEYS=["mood","tiny","weight","exercise","ledger","opp","learn","milestones","events","play","spirit"];
+  var KEYS=["meta","anchors","mood","tiny","weight","exercise","ledger","opp","learn","milestones","events","play","spirit","coins","rewards","settings"];
+  function defVal(k){if(k==="anchors")return {};if(k==="coins")return null;if(k==="rewards")return [];if(ARR_KEYS.indexOf(k)>=0)return [];return null;}
   function load(){
-    try{S.meta=JSON.parse(localStorage.getItem(K+"meta")||"null");S.anchors=JSON.parse(localStorage.getItem(K+"anchors")||"{}");S.mood=JSON.parse(localStorage.getItem(K+"mood")||"[]");S.tiny=JSON.parse(localStorage.getItem(K+"tiny")||"[]");S.weight=JSON.parse(localStorage.getItem(K+"weight")||"[]");S.exercise=JSON.parse(localStorage.getItem(K+"exercise")||"[]");S.ledger=JSON.parse(localStorage.getItem(K+"ledger")||"[]");S.opp=JSON.parse(localStorage.getItem(K+"opp")||"[]");S.learn=JSON.parse(localStorage.getItem(K+"learn")||"[]");S.milestones=JSON.parse(localStorage.getItem(K+"milestones")||"[]");S.events=JSON.parse(localStorage.getItem(K+"events")||"[]");S.play=JSON.parse(localStorage.getItem(K+"play")||"[]");S.spirit=JSON.parse(localStorage.getItem(K+"spirit")||"[]");S.coins=JSON.parse(localStorage.getItem(K+"coins")||"null");S.rewards=JSON.parse(localStorage.getItem(K+"rewards")||"null");S.settings=JSON.parse(localStorage.getItem(K+"settings")||"null");}catch(e){S.meta=null;S.anchors={};S.mood=[];S.tiny=[];S.weight=[];S.exercise=[];S.ledger=[];S.opp=[];S.learn=[];S.milestones=[];S.events=[];S.play=[];S.spirit=[];S.coins=0;S.rewards=[];S.settings=null;}
+    try{KEYS.forEach(function(k){var raw=localStorage.getItem(K+k);S[k]=raw===null?defVal(k):JSON.parse(raw);});}
+    catch(e){S.meta=null;S.anchors={};S.mood=[];S.tiny=[];S.weight=[];S.exercise=[];S.ledger=[];S.opp=[];S.learn=[];S.milestones=[];S.events=[];S.play=[];S.spirit=[];S.coins=0;S.rewards=[];S.settings=null;}
     if(!S.settings)S.settings=defaultSettings();
     migrateSettings();
     if(S.coins===null||S.coins===undefined)S.coins=countLegacyCoins();
@@ -488,7 +507,7 @@
     if(!S.meta)seed();
     applyTheme(S.settings.theme);
   }
-  function save(){localStorage.setItem(K+"meta",JSON.stringify(S.meta));localStorage.setItem(K+"anchors",JSON.stringify(S.anchors));localStorage.setItem(K+"mood",JSON.stringify(S.mood));localStorage.setItem(K+"tiny",JSON.stringify(S.tiny));localStorage.setItem(K+"weight",JSON.stringify(S.weight));localStorage.setItem(K+"exercise",JSON.stringify(S.exercise));localStorage.setItem(K+"ledger",JSON.stringify(S.ledger));localStorage.setItem(K+"opp",JSON.stringify(S.opp));localStorage.setItem(K+"learn",JSON.stringify(S.learn));localStorage.setItem(K+"milestones",JSON.stringify(S.milestones));localStorage.setItem(K+"events",JSON.stringify(S.events));localStorage.setItem(K+"play",JSON.stringify(S.play));localStorage.setItem(K+"coins",JSON.stringify(S.coins));localStorage.setItem(K+"rewards",JSON.stringify(S.rewards));localStorage.setItem(K+"settings",JSON.stringify(S.settings));render();}
+  function save(){KEYS.forEach(function(k){try{localStorage.setItem(K+k,JSON.stringify(S[k]===undefined?null:S[k]));}catch(e){}});render();}
   function seed(){
     S.meta={layoff:"2026-07-02",phase:"休息",phaseStart:tStr(),name:"我"};
     S.anchors={};S.mood=[];S.tiny=[];S.weight=[];S.exercise=[];S.ledger=[];S.opp=[];S.learn=[];S.milestones=[];S.events=[];S.play=[];S.spirit=[];
@@ -839,10 +858,10 @@
   $("#wDate").value=tStr();$("#exDate").value=tStr();$("#ledDate").value=tStr();$("#lnDate").value=tStr();$("#plDate").value=tStr();$("#spDate").value=tStr();$("#spType").innerHTML=SPIRIT_TYPES.map(function(c){return '<option>'+c+'</option>';}).join("");
   $("#expBtn").addEventListener("click",function(){var data={meta:S.meta,anchors:S.anchors,mood:S.mood,tiny:S.tiny,weight:S.weight,exercise:S.exercise,ledger:S.ledger,opp:S.opp,learn:S.learn,milestones:S.milestones,events:S.events,play:S.play,spirit:S.spirit,coins:S.coins,rewards:S.rewards,settings:S.settings};var blob=new Blob([JSON.stringify(data,null,2)],{type:"application/json"});var a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="gap-总台-备份-"+tStr()+".json";a.click();});
   $("#impBtn").addEventListener("click",function(){$("#impFile").click();});
-  $("#impFile").addEventListener("change",function(e){var f=e.target.files[0];if(!f)return;var r=new FileReader();r.onload=function(){try{var d=JSON.parse(r.result);["meta","anchors","mood","tiny","weight","exercise","ledger","opp","learn","milestones","events","play","spirit","coins","rewards","settings"].forEach(function(k){if(d[k]!==undefined)S[k]=d[k];});if(S.coins===undefined)S.coins=0;if(!S.rewards)S.rewards=[];applyTheme(S.settings.theme);save();alert("导入成功。");}catch(err){alert("文件格式不对，导入失败。");}};r.readAsText(f);e.target.value="";});
+  $("#impFile").addEventListener("change",function(e){var f=e.target.files[0];if(!f)return;var r=new FileReader();r.onload=function(){try{var d=JSON.parse(r.result);KEYS.forEach(function(k){if(d[k]!==undefined)S[k]=d[k];});if(S.coins===undefined)S.coins=0;if(!S.rewards)S.rewards=[];applyTheme(S.settings.theme);save();alert("导入成功。");}catch(err){alert("文件格式不对，导入失败。");}};r.readAsText(f);e.target.value="";});
   $("#sampleBtn").addEventListener("click",function(){if(confirm("载入示例会覆盖当前数据，确定？")){seedSamples();applyTheme(S.settings.theme);render();}});
   $("#rwAdd").addEventListener("click",function(){var v=$("#rwInput").value.trim();var c=parseInt($("#rwCost").value,10);if(!v){alert("写个奖励吧～");return;}if(!c||c<1){alert("填个能量币数量");return;}S.rewards.push({id:uid("rw"),text:v,cost:c,done:false,date:""});$("#rwInput").value="";$("#rwCost").value="";save();});
-  $("#clearBtn").addEventListener("click",function(){if(confirm("确定清空所有数据？此操作不可撤销（可先导出备份）。")){S.meta=null;S.anchors={};S.mood=[];S.tiny=[];S.weight=[];S.exercise=[];S.ledger=[];S.opp=[];S.learn=[];S.milestones=[];S.events=[];S.play=[];S.spirit=[];S.coins=0;S.rewards=defaultRewards();["meta","anchors","mood","tiny","weight","exercise","ledger","opp","learn","milestones","events","play","spirit","coins","rewards"].forEach(function(k){localStorage.removeItem(K+k);});seed();applyTheme(S.settings.theme);render();}});
+  $("#clearBtn").addEventListener("click",function(){if(confirm("确定清空所有数据？此操作不可撤销（可先导出备份）。")){S.meta=null;S.anchors={};S.mood=[];S.tiny=[];S.weight=[];S.exercise=[];S.ledger=[];S.opp=[];S.learn=[];S.milestones=[];S.events=[];S.play=[];S.spirit=[];S.coins=0;S.rewards=defaultRewards();KEYS.filter(function(k){return k!=="settings";}).forEach(function(k){localStorage.removeItem(K+k);});seed();applyTheme(S.settings.theme);render();}});
 
   /* ===== 设置抽屉 ===== */
   var T=null;
